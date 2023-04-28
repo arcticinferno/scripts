@@ -1,0 +1,63 @@
+#!/usr/bin/python
+
+import portage
+import colorama
+import argparse
+from enum import Enum
+
+class PpTypes(Enum):
+    VERSION = 0
+    USE = 1
+
+class Package:
+    def __init__(self, package) -> None:
+        self.db = portage.db[portage.root]["porttree"].dbapi
+        self.package = package
+
+    def versions(self):
+        if self.db.match(self.package) != []:
+            self.pretty_print(PpTypes.VERSION, self.db.match(self.package))
+    def useflags(self):
+        def get_use_flags(pkg):
+            if self.db.match(pkg) != []:
+                v = self.db.match(pkg)[-1]
+                return (self.db.aux_get(v, ["IUSE"])[0]).split(' ')
+            else:
+                return None
+        self.pretty_print(PpTypes.USE, get_use_flags(self.package))
+    def pretty_print(self, a: PpTypes, astr):
+        if a == PpTypes.VERSION:
+            def p(s):
+                print(f"{colorama.Fore.LIGHTGREEN_EX}*  {colorama.Style.RESET_ALL}{s}")
+            if astr != None:
+                print(f"{colorama.Fore.BLUE}VERSIONS{colorama.Style.RESET_ALL}")
+                for x in astr:
+                    p(x)
+        elif a == PpTypes.USE:
+            def p(s):
+               if s[0] == '+':
+                   print(f"{colorama.Fore.LIGHTRED_EX}* -> {colorama.Style.RESET_ALL}{s}")
+               else:
+                   print(f"{colorama.Fore.LIGHTBLUE_EX}* -> {colorama.Style.RESET_ALL}{s}")
+
+            if astr != None:
+                print(f"{colorama.Fore.BLUE}USEFLAGS{colorama.Style.RESET_ALL}")
+                for x in astr:
+                    p(x)
+             
+
+v = argparse.ArgumentParser()
+v.add_argument('--versions', '-v')
+v.add_argument('--use', '-u')
+
+args = v.parse_args()
+
+if args.versions:
+    xw = Package(args.versions)
+    xw.versions()
+if args.use:
+    xw = Package(args.use)
+    xw.useflags()
+
+
+

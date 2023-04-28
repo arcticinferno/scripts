@@ -1,0 +1,12 @@
+#!/bin/bash
+
+
+v=$(ytfzf -D -I link)
+
+if [[ "$v" =~ "youtu" ]]; then
+  mpv "$v" & disown
+  yt-dlp --merge-output-format mp4 "$v" -o "~/video/%(title)s.%(ext)s"
+else
+  exit
+fi
+
